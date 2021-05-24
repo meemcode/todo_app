@@ -15,8 +15,11 @@ class _HomeLayoutState extends State<HomeLayout> {
   Database database;
   int _currentIndex = 0;
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  GlobalKey<FormState> formdKey = GlobalKey<FormState>();
   bool isBottom = false;
   var titleController = TextEditingController();
+  var timeController = TextEditingController();
+  var dateController = TextEditingController();
 
   @override
   void initState() {
@@ -31,31 +34,96 @@ class _HomeLayoutState extends State<HomeLayout> {
       appBar: AppBar(title: Text(_titles[_currentIndex])),
       body: _screens[_currentIndex],
       floatingActionButton: FloatingActionButton(
+          mini: isBottom,
           child: Icon(isBottom ? Icons.close : Icons.edit),
           onPressed: () {
             if (isBottom) {
-              Navigator.pop(context);
-              setState(() {
-                isBottom = false;
-              });
+              if (formdKey.currentState.validate()) {
+                Navigator.pop(context);
+                setState(() {
+                  isBottom = false;
+                });
+              }
             } else {
               scaffoldKey.currentState.showBottomSheet(
                 (context) => Container(
                   padding: EdgeInsets.all(15),
                   width: double.infinity,
-                  color: Colors.white,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        controller: titleController,
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.title),
-                          border: OutlineInputBorder(),
-                          hintText: 'title',
+                  color: Colors.grey[100],
+                  child: Form(
+                    key: formdKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(height: 20),
+                        TextFormField(
+                          validator: (val) {
+                            if (val.isEmpty) {
+                              return 'title is empty';
+                            }
+                            ;
+                            return null;
+                          },
+                          controller: titleController,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.title),
+                            border: OutlineInputBorder(),
+                            hintText: 'title',
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 10),
+                        TextFormField(
+                          validator: (val) {
+                            if (val.isEmpty) {
+                              return 'time is empty';
+                            }
+
+                            return null;
+                          },
+                          onTap: () {
+                            showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now())
+                                .then((value) {
+                              setState(() {
+                                timeController.text = value.format(context);
+                              });
+                            });
+                          },
+                          controller: timeController,
+                          keyboardType: TextInputType.datetime,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.watch_later_outlined),
+                            border: OutlineInputBorder(),
+                            hintText: 'Time',
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextFormField(
+                          validator: (val) {
+                            if (val.isEmpty) {
+                              return 'date is empty';
+                            }
+                            return null;
+                          },
+                          controller: dateController,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(),
+                            hintText: 'Date',
+                          ),
+                          onTap: () {
+                            showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.parse('2023-05-03'),
+                            ).then((value) =>
+                                dateController.text = value.year.toString());
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
